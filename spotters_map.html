@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    
+        <script>
+            L_NO_TOUCH = false;
+            L_DISABLE_3D = false;
+        </script>
+    
+    <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>
+    <style>#map {position:absolute;top:0;bottom:0;right:0;left:0;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_74e61973846519fa8d24b151e4d19f7f {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_74e61973846519fa8d24b151e4d19f7f" ></div>
+        
+
+    <script>
+        // Add company banner
+        var banner = document.createElement('div');
+        banner.style.position = 'fixed';
+        banner.style.top = '10px';
+        banner.style.left = '50%';
+        banner.style.transform = 'translateX(-50%)';
+        banner.style.background = 'rgba(0, 0, 0, 0.8)';
+        banner.style.color = 'white';
+        banner.style.padding = '12px 24px';
+        banner.style.borderRadius = '5px';
+        banner.style.zIndex = '1000';
+        banner.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+        banner.style.fontFamily = 'Arial, sans-serif';
+        banner.style.fontSize = '20px';
+        banner.style.fontWeight = 'bold';
+        banner.style.letterSpacing = '1px';
+        banner.style.textTransform = 'uppercase';
+        banner.innerHTML = '⚡ Southern Style Storm Chasen LLC ⚡';
+        document.body.appendChild(banner);
+
+        // Add last update time with live clock and date
+        var lastUpdate = document.createElement('div');
+        lastUpdate.style.position = 'fixed';
+        lastUpdate.style.bottom = '10px';
+        lastUpdate.style.left = '10px';
+        lastUpdate.style.background = 'rgba(255, 255, 255, 0.9)';
+        lastUpdate.style.padding = '8px 12px';
+        lastUpdate.style.borderRadius = '5px';
+        lastUpdate.style.zIndex = '1000';
+        lastUpdate.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+        lastUpdate.style.fontFamily = 'Arial, sans-serif';
+        lastUpdate.style.fontSize = '14px';
+        
+        // Add LIVE indicator
+        var liveIndicator = document.createElement('span');
+        liveIndicator.style.color = '#ff0000';
+        liveIndicator.style.marginRight = '8px';
+        liveIndicator.style.animation = 'blink 2s infinite';
+        
+        // Add blinking animation
+        var style = document.createElement('style');
+        style.textContent = `
+            @keyframes blink {
+                0% { opacity: 1; }
+                50% { opacity: 0.5; }
+                100% { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        function updateClock() {
+            var now = new Date();
+            var date = now.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            var time = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            
+            liveIndicator.innerHTML = '● LIVE';
+            lastUpdate.innerHTML = '';
+            lastUpdate.appendChild(liveIndicator);
+            lastUpdate.appendChild(document.createTextNode(date + ' ' + time));
+        }
+        
+        // Update clock every second
+        updateClock();
+        setInterval(updateClock, 1000);
+        document.body.appendChild(lastUpdate);
+        
+        // Add radar refresh function
+        function refreshRadar() {
+            var mapLayers = document.querySelectorAll('img.leaflet-tile');
+            mapLayers.forEach(function(layer) {
+                if (layer.src.includes('mesonet.agron.iastate.edu')) {
+                    layer.src = layer.src.split('?')[0] + '?_=' + new Date().getTime();
+                }
+            });
+        }
+        
+        // Refresh radar every 30 seconds
+        setInterval(refreshRadar, 30000);
+    </script>
+    </body>
+<script>
+    
+    
+            var map_74e61973846519fa8d24b151e4d19f7f = L.map(
+                "map_74e61973846519fa8d24b151e4d19f7f",
+                {
+                    center: [33.553688, -85.07164],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 4,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_628ca33f375e84330b87f69bdc0d6090 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_628ca33f375e84330b87f69bdc0d6090.addTo(map_74e61973846519fa8d24b151e4d19f7f);
+        
+    
+            var marker_c71787e057c027ad6755beeba35af6f7 = L.marker(
+                [33.553688, -85.07164],
+                {
+}
+            ).addTo(map_74e61973846519fa8d24b151e4d19f7f);
+        
+    
+        var popup_59f3dabce9f624f125e4528cc2293e40 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_fc2f9478b4dec51b675310f031d1755c = $(`<div id="html_fc2f9478b4dec51b675310f031d1755c" style="width: 100.0%; height: 100.0%;">                 <b>Nathan Bradley </b><br>                 Reported: 2025-02-07 12:58:34<br>                 Elevation: 327m<br>                 Direction: -1°<br>                 Note: Freelance Photography- WRAN711- 462<br></div>`)[0];
+                popup_59f3dabce9f624f125e4528cc2293e40.setContent(html_fc2f9478b4dec51b675310f031d1755c);
+            
+        
+
+        marker_c71787e057c027ad6755beeba35af6f7.bindPopup(popup_59f3dabce9f624f125e4528cc2293e40)
+        ;
+
+        
+    
+    
+            marker_c71787e057c027ad6755beeba35af6f7.bindTooltip(
+                `<div>
+                     Nathan Bradley 
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_0c229c4bb2f2116e48a72fcd3d977912 = L.marker(
+                [34.1844749, -84.1664658],
+                {
+}
+            ).addTo(map_74e61973846519fa8d24b151e4d19f7f);
+        
+    
+        var popup_84ee8fef468aa57fed4282333d681ece = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_7870f29d6da9b41b9e282bdbdb57b06a = $(`<div id="html_7870f29d6da9b41b9e282bdbdb57b06a" style="width: 100.0%; height: 100.0%;">                 <b>David wallis</b><br>                 Reported: 2025-02-07 21:43:54<br>                 Elevation: 335m<br>                 Direction: 9°<br>                 </div>`)[0];
+                popup_84ee8fef468aa57fed4282333d681ece.setContent(html_7870f29d6da9b41b9e282bdbdb57b06a);
+            
+        
+
+        marker_0c229c4bb2f2116e48a72fcd3d977912.bindPopup(popup_84ee8fef468aa57fed4282333d681ece)
+        ;
+
+        
+    
+    
+            marker_0c229c4bb2f2116e48a72fcd3d977912.bindTooltip(
+                `<div>
+                     David wallis
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var tile_layer_0ab7b0c31ca9c39eaaf745769b44a59e = L.tileLayer(
+                "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?_=1738964728",
+                {
+  "minZoom": 0,
+  "maxZoom": 18,
+  "maxNativeZoom": 18,
+  "noWrap": false,
+  "attribution": "Weather data \u00a9 NOAA",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 0.7,
+}
+
+            );
+        
+    
+            tile_layer_0ab7b0c31ca9c39eaaf745769b44a59e.addTo(map_74e61973846519fa8d24b151e4d19f7f);
+        
+    
+            var layer_control_2d0cb0c7d8477d021a8aab8556836b01_layers = {
+                base_layers : {
+                    "openstreetmap" : tile_layer_628ca33f375e84330b87f69bdc0d6090,
+                },
+                overlays :  {
+                    "NOAA Weather Radar" : tile_layer_0ab7b0c31ca9c39eaaf745769b44a59e,
+                },
+            };
+            let layer_control_2d0cb0c7d8477d021a8aab8556836b01 = L.control.layers(
+                layer_control_2d0cb0c7d8477d021a8aab8556836b01_layers.base_layers,
+                layer_control_2d0cb0c7d8477d021a8aab8556836b01_layers.overlays,
+                {
+  "position": "topright",
+  "collapsed": true,
+  "autoZIndex": true,
+}
+            ).addTo(map_74e61973846519fa8d24b151e4d19f7f);
+
+        
+</script>
+</html>
