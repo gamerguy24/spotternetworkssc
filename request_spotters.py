@@ -4,11 +4,8 @@ import sys
 import folium
 from datetime import datetime
 import time
-import webbrowser
 import os
 from threading import Thread
-from http.server import HTTPServer, SimpleHTTPRequestHandler
-import threading
 from pathlib import Path
 
 def get_spotters_positions(application_id, marker_ids):
@@ -109,28 +106,17 @@ def get_spotters_positions(application_id, marker_ids):
     except Exception as e:
         print(f"Unexpected error: {e}")
 
-def start_web_server(port=8000):
-    """
-    Start a simple HTTP server to serve the map
-    """
-    server_address = ('', port)
-    httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
-    
-    # Run server in a separate thread
-    server_thread = threading.Thread(target=httpd.serve_forever)
-    server_thread.daemon = True
-    server_thread.start()
-    
-    print(f"\nMap server started at http://localhost:{port}")
-    return httpd
-
-def create_map(positions):
+def create_map(positions, temp_dir='/tmp'):
     """
     Create an interactive map showing spotter locations with auto-refresh.
     
     Args:
         positions (list): List of spotter position dictionaries
+        temp_dir (str): Directory to store temporary files
     """
+    # Create public directory if it doesn't exist
+    os.makedirs('public', exist_ok=True)
+    
     # Create a map centered on the first spotter, or US center if no spotters
     if positions:
         center_lat = float(positions[0].get('lat', 39.8283))
@@ -180,7 +166,7 @@ def create_map(positions):
     # Add layer control to toggle radar
     folium.LayerControl(position='topright').add_to(m)
     
-    # Add auto-refresh meta tag and last update time with better formatting
+    # Add auto-refresh script to the file
     auto_refresh_script = f"""
     <script>
         // Add company banner
@@ -274,106 +260,26 @@ def create_map(positions):
     </script>
     """
     
-    # Save with a fixed filename instead of timestamp-based name
-    map_file = "spotters_map.html"
+    # Save to temp directory instead of public folder
+    map_file = os.path.join(temp_dir, "spotters_map.html")
     m.save(map_file)
     
     # Add auto-refresh script to the file
     with open(map_file, 'r', encoding='utf-8') as file:
         content = file.read()
     with open(map_file, 'w', encoding='utf-8') as file:
-        # Insert auto-refresh script before </body>
         content = content.replace('</body>', f'{auto_refresh_script}</body>')
         file.write(content)
     
     return map_file
 
-def auto_refresh_map(application_id, marker_ids, refresh_interval=60):
-    """
-    Continuously update the map at specified intervals.
-    
-    Args:
-        application_id (str): Your application ID
-        marker_ids (list): List of marker IDs to monitor
-        refresh_interval (int): Seconds between updates
-    """
-    # Start the web server
-    server = start_web_server()
-    map_file = "spotters_map.html"
-    
-    try:
-        while True:
-            # Get new data and update map
-            result = get_spotters_positions(application_id, marker_ids)
-            create_map(result.get('positions', []))
-            
-            # Open browser only on first run
-            if not hasattr(auto_refresh_map, '_browser_opened'):
-                webbrowser.open(f'http://localhost:8000/{map_file}')
-                auto_refresh_map._browser_opened = True
-            
-            print(f"\nMap updated at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            print(f"Next update in {refresh_interval} seconds...")
-            time.sleep(refresh_interval)
-            
-    except KeyboardInterrupt:
-        print("\nStopping map updates...")
-        server.shutdown()
-    except Exception as e:
-        print(f"\nError in auto-refresh: {e}")
-        server.shutdown()
-
-def load_spotter_list():
-    """Load the list of spotter IDs from spotters.json"""
-    spotter_file = Path("spotters.json")
-    if spotter_file.exists():
-        with open(spotter_file, "r") as f:
-            return json.load(f)
-    return {
-        "active_spotters": [50305, 23412],  # Your default spotters
-        "watch_region": {
-            "min_lat": 25.0,  # Southern boundary (Florida)
-            "max_lat": 45.0,  # Northern boundary (roughly Michigan)
-            "min_lon": -100.0,  # Western boundary (roughly Texas)
-            "max_lon": -75.0   # Eastern boundary (roughly East Coast)
-        }
-    }
-
-def save_spotter_list(spotter_data):
-    """Save the current list of spotter IDs"""
-    with open("spotters.json", "w") as f:
-        json.dump(spotter_data, f, indent=2)
-
 def main():
-    """
-    Main function to run the spotter position lookup.
-    Creates a self-refreshing map file.
-    """
     APPLICATION_ID = "55f78b6ed31f5"
+    marker_ids = [50305, 23412, 45939]
     
-    print("\nSpotter Network Position Lookup")
-    print("-" * 30)
-    
-    # Use fixed marker IDs
-    marker_ids = [50305, 23412, 45939]  # Added spotter ID 45939
-    print(f"Using marker IDs: {marker_ids}")
-    
-    try:
-        # Start continuous updates
-        while True:
-            # Get spotter data and create map
-            result = get_spotters_positions(APPLICATION_ID, marker_ids)
-            if result:
-                create_map(result.get('positions', []))
-                print(f"\nTracking {len(marker_ids)} spotters")
-                print(f"Next update in 30 seconds...")
-            time.sleep(30)
-            
-    except KeyboardInterrupt:
-        print("\nStopping updates...")
-        
-    except Exception as e:
-        print(f"\nError: {e}")
+    result = get_spotters_positions(APPLICATION_ID, marker_ids)
+    if result:
+        create_map(result.get('positions', []))
 
 if __name__ == "__main__":
     main() 
